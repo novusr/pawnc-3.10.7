@@ -146,6 +146,15 @@ static char extensions[][6] = { "", ".inc", ".p", ".pawn" };
   if (path==NULL)
     error(103);                 /* insufficient memory */
   strcpy(path,name);
+  #if DIRSEP_CHAR!='\\'
+  {
+    char *ptr;
+    /* always convert backslashes to native directory separators */
+    for (ptr=path; *ptr!='\0'; ptr++)
+      if (*ptr=='\\')
+        *ptr=DIRSEP_CHAR;
+  }
+  #endif
   real_path=(char *)malloc(strlen(name)+sizeof(extensions[0]));
   if (real_path==NULL)
     error(103);                 /* insufficient memory */
@@ -154,17 +163,6 @@ static char extensions[][6] = { "", ".inc", ".p", ".pawn" };
     ext=strchr(path,'\0');      /* save position */
     strcpy(ext,extensions[ext_idx]);
     strcpy(real_path,path);
-    #if DIRSEP_CHAR!='\\'
-      if (pc_compat) {
-        char *ptr;
-        /* convert backslashes to native directory separators for maximum
-         * compatibility with the Windows compiler
-         */
-        for (ptr=real_path; *ptr!='\0'; ptr++)
-          if (*ptr=='\\')
-            *ptr=DIRSEP_CHAR;
-      }
-    #endif
     stat(real_path, &st);
     if (!S_ISDIR(st.st_mode))   /* ignore directories with the same name */
       fp=(FILE*)pc_opensrc(real_path);
@@ -209,9 +207,7 @@ SC_FUNC int plungefile(char *name,int try_currentpath,int try_includepaths)
 {
   char dirsep=
     #if DIRSEP_CHAR!='\\'
-      /* use Windows directory separators in compatibility mode and
-       * native separators otherwise */
-      pc_compat ? '\\' : DIRSEP_CHAR;
+      DIRSEP_CHAR;
     #else
       DIRSEP_CHAR;
     #endif
