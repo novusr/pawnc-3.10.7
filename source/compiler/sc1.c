@@ -913,6 +913,8 @@ static void initglobals(void)
   verbosity=1;           /* verbosity level, no copyright banner */
   sc_debug=sCHKBOUNDS;   /* by default: bounds checking+assertions */
   pc_optimize=sOPTIMIZE_NOMACRO;
+  pc_compat=FALSE;       /* reset compatibility mode */
+  pc_recursion=FALSE;    /* reset recursion report */
   sc_packstr=FALSE;      /* strings are unpacked by default */
   #if AMX_COMPACTMARGIN > 2
     sc_compress=TRUE;    /* compress output bytecodes */
