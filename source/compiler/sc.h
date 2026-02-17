@@ -721,6 +721,7 @@ SC_FUNC void outinstr(const char *name,emit_outval params[],int numparams);
 /* function prototypes in SC5.C */
 SC_FUNC int error(int number,...);
 SC_FUNC void errorset(int code,int line);
+void error_init(void);
 
 /* function prototypes in SC6.C */
 SC_FUNC int assemble(FILE *fout,FILE *fin);

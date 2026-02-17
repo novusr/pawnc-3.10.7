@@ -475,6 +475,7 @@ int pc_compile(int argc, char *argv[])
 
   /* set global variables to their initial value */
   binf=NULL;
+  error_init();
   initglobals();
   errorset(sRESET,0);
   errorset(sEXPRRELEASE,0);
