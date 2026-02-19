@@ -210,6 +210,13 @@ static short err_lastfile;
 
 void error_init(void)
 {
+  /* free any pushed warning stacks from a previous compilation */
+  while (warnstack.next != NULL) {
+    struct s_warnstack *p = (struct s_warnstack *)warnstack.next;
+    warnstack.next = p->next;
+    free(p);
+  }
+
   errflag=0;
   errstart=0;
   errline=0;
