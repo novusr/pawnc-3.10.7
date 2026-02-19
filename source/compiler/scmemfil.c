@@ -41,7 +41,7 @@ typedef memfile_t MEMFILE;
 
 MEMFILE *mfcreate(const char *filename)
 {
-  return memfile_creat(filename, 4096);
+  return memfile_creat(filename, 256 * 1024);
 }
 
 void mfclose(MEMFILE *mf)
@@ -60,7 +60,7 @@ int mfdump(MEMFILE *mf)
   if (fp==NULL)
     return 0;
 
-  okay = (fwrite(mf->base, mf->usedoffs, 1, fp)==(size_t)mf->usedoffs);
+  okay = (fwrite(mf->base, 1, mf->usedoffs, fp)==(size_t)mf->usedoffs);
 
   fclose(fp);
   return okay;
@@ -118,37 +118,28 @@ unsigned int mfread(MEMFILE *mf,unsigned char *buffer,unsigned int size)
 
 char *mfgets(MEMFILE *mf,char *string,unsigned int size)
 {
-  char *ptr;
-  unsigned int read;
-  long seek;
+  char *src, *nl;
+  long avail;
+  unsigned int copylen, maxread;
 
   assert(mf!=NULL);
-
-  read=mfread(mf,(unsigned char *)string,size);
-  if (read==0)
+  if (size==0)
     return NULL;
-  seek=0L;
 
-  /* make sure that the string is zero-terminated */
-  assert(read<=size);
-  if (read<size) {
-    string[read]='\0';
-  } else {
-    string[size-1]='\0';
-    seek=-1;            /* undo reading the character that gets overwritten */
-  } /* if */
+  avail=mf->usedoffs - mf->offs;
+  if (avail<=0)
+    return NULL;
 
-  /* find the first '\n' */
-  ptr=strchr(string,'\n');
-  if (ptr!=NULL) {
-    *(ptr+1)='\0';
-    seek=(long)(ptr-string)+1-(long)read;
-  } /* if */
+  maxread=((unsigned int)avail < size - 1) ? (unsigned int)avail : size - 1;
+  src=mf->base + mf->offs;
 
-  /* undo over-read */
-  assert(seek<=0);      /* should seek backward only */
-  if (seek!=0)
-    mfseek(mf,seek,SEEK_CUR);
+  /* find newline directly in source buffer (zero-copy) */
+  nl=(char *)memchr(src, '\n', maxread);
+  copylen=nl ? (unsigned int)(nl - src + 1) : maxread;
+
+  memcpy(string, src, copylen);
+  string[copylen]='\0';
+  mf->offs+=copylen;
 
   return string;
 }
