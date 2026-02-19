@@ -392,10 +392,13 @@ static void readline(unsigned char *line)
       *line='\0';     /* delete line */
       cont=FALSE;
     } else {
-      /* check whether to erase leading whitespace after '\\' on next line */
+       /* check whether to erase leading spaces */
       if (cont) {
-        if (ptr!=line)
-          memmove(line,ptr,strlen((char*)ptr)+1);
+        unsigned char *p=line;
+        while (*p!='\0' && *p<=' ' && *p!='\n')
+          p++;
+        if (p!=line)
+          memmove(line,p,strlen((char*)p)+1);
       } /* if */
       cont=FALSE;
       /* check whether a full line was read */
