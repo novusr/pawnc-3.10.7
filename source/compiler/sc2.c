@@ -269,11 +269,8 @@ static void check_empty(const unsigned char *lptr)
 static void doinclude(int silent)
 {
   char name[_MAX_PATH];
-  char symname[sNAMEMAX];
-  char *ptr;
   char c;
   int i, result;
-  int included=FALSE;
 
   while (*lptr<=' ' && *lptr!='\0')         /* skip leading whitespace */
     lptr++;
@@ -301,37 +298,13 @@ static void doinclude(int silent)
   if (c!='\0')
     check_empty(lptr+1);        /* verify that the rest of the line is whitespace */
 
-  if (pc_compat) {
-    /* create a symbol from the name of the include file; this allows the system
-     * to test for multiple inclusions
-     */
-    char dirsep=
-      #if DIRSEP_CHAR!='\\'
-        '\\';
-      #else
-        DIRSEP_CHAR;
-      #endif
-    strcpy(symname,"_inc_");
-    if ((ptr=strrchr(name,dirsep))!=NULL)
-      strlcat(symname,ptr+1,sizeof symname);
-    else
-      strlcat(symname,name,sizeof symname);
-    included=find_symbol(&glbtab,symname,fcurrent,-1,NULL)!=NULL;
-  } /* if */
-
-  if (!included) {
-    /* constant is not present, so this file has not been included yet */
-
-    /* Include files between "..." or without quotes are read from the current
-     * directory, or from a list of "include directories". Include files
-     * between <...> are only read from the list of include directories.
-     */
-    result=plungefile(name,(c!='>'),TRUE);
-    if (result && pc_compat)
-      add_constant(symname,1,sGLOBAL,0);
-    else if (!result && !silent)
-      error(100,name);          /* cannot read from ... (fatal error) */
-  } /* if */
+  /* Include files between "..." or without quotes are read from the current
+   * directory, or from a list of "include directories". Include files
+   * between <...> are only read from the list of include directories.
+   */
+  result=plungefile(name,(c!='>'),TRUE);
+  if (!result && !silent)
+    error(100,name);            /* cannot read from ... (fatal error) */
 }
 
 /*  readline
@@ -1251,14 +1224,6 @@ static int command(void)
           if (!ok) {
             error(207);         /* unknown #pragma */
           }
-        } else if (strcmp(str,"compat")==0) {
-          cell val;
-          symbol *sym;
-          preproc_expr(&val,NULL);
-          pc_compat=(int)val;   /* switch compatibility mode on/off */
-          sym=findconst("__compat",NULL);
-          assert(sym!=NULL);
-          sym->addr=pc_compat;
         } else if (strcmp(str,"option")==0) {
           char name[sNAMEMAX+1];
           int i;
